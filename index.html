@@ -906,6 +906,7 @@
 
 <!-- MAIN APP TOOL -->
 <section id="app" class="app-container">
+  <div id="toast-container"></div>
   <div class="glass-panel-wrapper">
     <div class="glass-panel" id="appPanel">
 
@@ -1258,18 +1259,7 @@
     }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' }).observe(el);
   });
 
-  // Tab switching (standalone — no chrome.runtime needed)
-  document.querySelectorAll('.tab-btn').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
-      btn.classList.add('active');
-      document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
-      var panel = document.getElementById('panel-' + btn.dataset.tab);
-      if (panel) panel.classList.add('active');
-    });
-  });
-
-  // Settings modal — add button with correct ID for popup.js compat
+  // Settings button — add with correct ID for popup.js compat
   var settingsBtn = document.createElement('button');
   settingsBtn.id = 'settings-btn';
   settingsBtn.className = 'tab-btn';
