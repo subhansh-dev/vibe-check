@@ -306,7 +306,7 @@
       var cat = score.categories[key];
       if (!cat) return;
       var pct = (cat.score / 20) * 100;
-      var barColor = pct >= 80 ? '#C4A265' : pct >= 60 ? '#8B7355' : pct >= 40 ? '#C4A265' : pct >= 20 ? '#9A7A50' : '#B85450';
+      var barColor = pct >= 80 ? '#C4A265' : pct >= 60 ? '#8B7355' : pct >= 40 ? '#B88A44' : pct >= 20 ? '#9A7A50' : '#B85450';
       var row = document.createElement('div');
       row.className = 'score-bar-row';
       row.innerHTML = '<span class="score-bar-label">' + catLabels[i] + '</span>' +
@@ -392,7 +392,7 @@
     ringPct.textContent = analysis.efficiency + '%';
     var offset = 163.36 - (163.36 * analysis.efficiency / 100);
     ring.style.strokeDashoffset = offset;
-    var color = analysis.efficiency > 70 ? '#C4A265' : analysis.efficiency > 40 ? '#C4A265' : '#B85450';
+    var color = analysis.efficiency > 70 ? '#C4A265' : analysis.efficiency > 40 ? '#B88A44' : '#B85450';
     ring.style.stroke = color;
     ringPct.style.color = color;
     fillerCount.textContent = analysis.fillerWords + ' words of filler detected';
@@ -873,11 +873,14 @@
     });
   }
 
+  var historySearchDebounce = null;
   function initHistory() {
     var search = $('history-search');
     if (search) {
       search.addEventListener('input', function() {
-        renderHistory(this.value);
+        if (historySearchDebounce) clearTimeout(historySearchDebounce);
+        var val = this.value;
+        historySearchDebounce = setTimeout(function() { renderHistory(val); }, 250);
       });
     }
     var clear = $('btn-clear-history');
@@ -913,17 +916,19 @@
       entries.forEach(function(entry) {
         var item = document.createElement('div');
         item.className = 'history-item';
-        var scoreColor = entry.score >= 80 ? '#C4A265' : entry.score >= 60 ? '#8B7355' : entry.score >= 40 ? '#C4A265' : entry.score >= 20 ? '#9A7A50' : '#B85450';
+        var scoreColor = entry.score >= 80 ? '#C4A265' : entry.score >= 60 ? '#8B7355' : entry.score >= 40 ? '#B88A44' : entry.score >= 20 ? '#9A7A50' : '#B85450';
         var preview = (entry.original || '').substring(0, 80);
         if ((entry.original || '').length > 80) preview += '...';
         var timeAgo = getTimeAgo(entry.timestamp);
-        var stackBadge = entry.stack ? '<span class="history-stack-badge">' + entry.stack + '</span>' : '';
+        var stackBadge = entry.stack ? '<span class="history-stack-badge">' + escapeHtml(entry.stack) + '</span>' : '';
         item.innerHTML = '<div class="history-score" style="background:' + scoreColor + '">' + entry.score + '</div>' +
           '<div class="history-preview">' + escapeHtml(preview) + '</div>' +
           '<div class="history-meta">' +
             '<span>' + timeAgo + '</span>' +
             stackBadge +
-            '<button class="history-star' + (entry.favorite ? ' favorited' : '') + '" data-id="' + entry.id + '">' + (entry.favorite ? '\u2605' : '\u2606') + '</button>' +
+            '<button class="history-star' + (entry.favorite ? ' favorited' : '') + '" data-id="' + entry.id + '" title="' + (entry.favorite ? 'Unfavorite' : 'Favorite') + '">' +
+              '<svg width="12" height="12" viewBox="0 0 24 24" fill="' + (entry.favorite ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' +
+            '</button>' +
           '</div>' +
           '<div class="history-detail">' +
             '<div class="history-detail-header"><span class="history-detail-label">Original</span>' +
@@ -946,11 +951,13 @@
           });
         });
         var star = item.querySelector('.history-star');
-        star.addEventListener('click', async function(e) {
-          e.stopPropagation();
-          await toggleFavorite(entry.id);
-          renderHistory(query);
-        });
+        if (star) {
+          star.addEventListener('click', async function(e) {
+            e.stopPropagation();
+            await toggleFavorite(entry.id);
+            renderHistory(query);
+          });
+        }
         list.appendChild(item);
       });
     } catch (e) {
