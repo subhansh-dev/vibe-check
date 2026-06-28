@@ -203,7 +203,10 @@ body {
   transition:all var(--transition); border:1px solid var(--border);
 }
 .btn-icon-only:hover { color:var(--text-primary); background:var(--bg-hover); }
+.btn-undo { } /* placeholder */
+.btn-undo.hidden { display:none; }
 .btn-icon-only.hidden { display:none; }
+.hidden { display:none; }
 
 .score-display {
   background: rgba(10,10,14,0.5);

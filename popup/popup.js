@@ -66,6 +66,7 @@
 
   let currentStack = null;
   let lastResult = null;
+  let lastScoreResult = null;
   let undoStack = [];
   let redoStack = [];
   let tipInterval = null;
@@ -222,6 +223,7 @@
         improvements: improvements,
         detectedType: detectedType
       };
+      lastScoreResult = scoreResult;
       undoStack.push(text);
       redoStack = [];
       displayResult(text, enhancedText, scoreResult);
@@ -422,6 +424,7 @@
       updateWordCount();
       updateComplexityBadge();
       $('btn-enhance').disabled = input.value.trim().length === 0;
+      hideResultDisplays();
       updateRedoVisibility();
       showToast('Undone', 'cyan');
     }
@@ -436,9 +439,23 @@
       updateWordCount();
       updateComplexityBadge();
       $('btn-enhance').disabled = input.value.trim().length === 0;
+      if (lastResult && lastScoreResult) {
+        displayResult(lastResult.original, lastResult.enhanced, lastScoreResult);
+      }
       updateRedoVisibility();
       showToast('Redone', 'cyan');
     }
+  }
+
+  function hideResultDisplays() {
+    var el = $('score-display');
+    if (el) el.classList.add('hidden');
+    el = $('enhanced-area');
+    if (el) el.classList.add('hidden');
+    el = $('before-after');
+    if (el) el.classList.add('hidden');
+    el = $('token-efficiency');
+    if (el) el.classList.add('hidden');
   }
 
   function updateRedoVisibility() {
