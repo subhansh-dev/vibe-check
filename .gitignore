@@ -1,0 +1,31 @@
+node_modules/
+.env
+.env.local
+.vercel/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Extension packaging
+*.zip
+*.crx
+*.pem
+
+# Claude AI config (local dev only)
+.claude/
+
+# Temporary
+tmp/
+temp/

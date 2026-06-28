@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vibe Check</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="popup.css">
+  <!-- POLYFILL FIRST — makes everything work in browser preview -->
+  <script src="../lib/chrome-polyfill.js"></script>
+  <script src="../lib/settings.js"></script>
+  <script src="../lib/stack-detector.js"></script>
+  <script src="../lib/templates.js"></script>
+  <script src="../lib/scorer.js"></script>
+  <script src="../lib/enhancer.js"></script>
+  <script src="../lib/prompt-engineer.js"></script>
+  <script src="../lib/history.js"></script>
+  <script src="popup.js"></script>
+</head>
+<body>
+  <div id="toast-container"></div>
+
+  <header id="header">
+    <div class="header-left">
+      <svg class="logo-icon" width="22" height="22" viewBox="0 0 32 32" fill="none">
+        <rect width="32" height="32" rx="8" fill="url(#logoGrad)"/>
+        <path d="M10 22V10h4l5 8 5-8h4v12h-4v-7l-5 8h-2l-5-8v7h-4z" fill="#010103" opacity="0.9"/>
+        <defs><linearGradient id="logoGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#C4A265"/><stop offset="100%" stop-color="#8B7355"/></linearGradient></defs>
+      </svg>
+      <span class="logo-text">VIBE CHECK</span>
+    </div>
+    <nav class="header-tabs">
+      <button class="tab-btn active" data-tab="enhance" id="tab-enhance">Enhance</button>
+      <button class="tab-btn" data-tab="templates" id="tab-templates">Templates</button>
+      <button class="tab-btn" data-tab="engineer" id="tab-engineer">Engineer</button>
+      <button class="tab-btn" data-tab="history" id="tab-history">History</button>
+    </nav>
+    <button class="settings-btn" id="settings-btn" title="Settings">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+      </svg>
+    </button>
+  </header>
+
+  <div id="tab-content" class="tab-content">
+    <div class="tab-panel active" id="panel-enhance">
+      <div id="stack-badge" class="stack-badge hidden">
+        <span class="stack-label">Currently on:</span>
+        <span class="stack-name" id="stack-name"></span>
+      </div>
+      <div id="stack-tips" class="stack-tips hidden">
+        <div class="tips-header">Tips for <span id="tips-stack-name"></span>:</div>
+        <ul id="tips-list"></ul>
+      </div>
+      <div class="textarea-wrapper">
+        <textarea id="prompt-input" placeholder="Type or paste your prompt here..." maxlength="5000"></textarea>
+        <div class="input-meta">
+          <span id="word-count">0 words &middot; 0 characters</span>
+          <span id="complexity-badge" class="complexity-badge hidden"></span>
+        </div>
+      </div>
+      <div class="action-row">
+        <button class="btn-enhance" id="btn-enhance" disabled>
+          <svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10" fill="#000"/></svg>
+          <span class="btn-label">Enhance Prompt</span>
+          <span class="btn-spinner hidden"></span>
+        </button>
+        <button class="btn-undo hidden" id="btn-undo" title="Undo enhancement (Ctrl+Z)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="1 4 1 10 7 10"/>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+          </svg>
+        </button>
+        <button class="btn-undo hidden" id="btn-redo" title="Redo enhancement (Ctrl+Y)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform:scaleX(-1)">
+            <polyline points="1 4 1 10 7 10"/>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+          </svg>
+        </button>
+      </div>
+      <div id="score-display" class="score-display hidden">
+        <div class="score-main">
+          <span class="score-number" id="score-number">0</span>
+          <span class="score-divider">/</span>
+          <span class="score-max">100</span>
+        </div>
+        <div class="score-label" id="score-label"></div>
+        <div class="score-bars" id="score-bars"></div>
+        <div class="score-feedback" id="score-feedback"></div>
+      </div>
+      <div id="enhanced-area" class="enhanced-area hidden">
+        <div class="enhanced-header">
+          <span class="enhanced-title">Enhanced Prompt</span>
+          <button class="btn-copy" id="btn-copy-enhanced" title="Copy to clipboard">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+          </button>
+        </div>
+        <pre class="enhanced-text" id="enhanced-text"></pre>
+        <div class="improvements-list" id="improvements-list"></div>
+      </div>
+      <div id="before-after" class="before-after hidden">
+        <div class="split-container">
+          <div class="split-col">
+            <div class="split-header">
+              <span>Before</span>
+              <button class="btn-copy-sm" id="btn-copy-before" title="Copy">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              </button>
+            </div>
+            <pre class="split-text" id="before-text"></pre>
+          </div>
+          <div class="split-col">
+            <div class="split-header">
+              <span>After</span>
+              <button class="btn-copy-sm" id="btn-copy-after" title="Copy">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              </button>
+            </div>
+            <pre class="split-text" id="after-text"></pre>
+          </div>
+        </div>
+        <div class="changes-list" id="changes-list"></div>
+      </div>
+      <div id="token-efficiency" class="token-efficiency hidden">
+        <div class="efficiency-header" id="efficiency-toggle">
+          <span>Token Efficiency</span>
+          <span class="efficiency-pct" id="efficiency-pct"></span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="chevron"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="efficiency-body hidden" id="efficiency-body">
+          <div class="efficiency-ring-container">
+            <svg width="60" height="60" viewBox="0 0 60 60">
+              <circle cx="30" cy="30" r="26" fill="none" stroke="#222" stroke-width="4"/>
+              <circle id="efficiency-ring" cx="30" cy="30" r="26" fill="none" stroke="#C4A265" stroke-width="4"
+                stroke-dasharray="163.36" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 30 30)"/>
+            </svg>
+            <span class="ring-percent" id="ring-percent">100%</span>
+          </div>
+          <div class="efficiency-details">
+            <div class="filler-count" id="filler-count"></div>
+            <ul class="filler-list" id="filler-list"></ul>
+            <button class="btn-outline btn-small" id="btn-strip-filler">Strip Filler</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="panel-templates">
+      <div class="template-categories" id="templates-category-tabs">
+        <button class="template-cat-btn active" data-category="ui-components">UI Components</button>
+        <button class="template-cat-btn" data-category="full-apps">Full Apps</button>
+        <button class="template-cat-btn" data-category="fixes">Fixes</button>
+        <button class="template-cat-btn" data-category="api-backend">API</button>
+        <button class="template-cat-btn" data-category="ai-prompts">AI</button>
+      </div>
+      <div class="template-search-wrapper">
+        <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" class="template-search" id="template-search" placeholder="Search templates...">
+      </div>
+      <div class="templates-grid" id="templates-grid"></div>
+    </div>
+
+    <div class="tab-panel" id="panel-engineer">
+      <!-- Source prompt input -->
+      <div class="engineer-section">
+        <div class="section-header">
+          <span class="section-label">Source Prompt</span>
+          <button class="btn-outline btn-small" id="btn-engineer-from-enhance">Use last enhanced</button>
+        </div>
+        <textarea id="engineer-input" placeholder="Paste or type your prompt to engineer..." maxlength="5000"></textarea>
+        <div class="input-meta">
+          <span id="engineer-word-count">0 words · 0 characters</span>
+        </div>
+      </div>
+
+      <!-- Quality Checklist -->
+      <div class="engineer-section">
+        <div class="section-header">
+          <span class="section-label">Quality Checklist</span>
+          <span class="checklist-score" id="checklist-score"></span>
+        </div>
+        <div class="checklist-grid" id="checklist-grid"></div>
+      </div>
+
+      <!-- Technique Selector -->
+      <div class="engineer-section">
+        <div class="section-header">
+          <span class="section-label">Apply Techniques</span>
+          <button class="btn-outline btn-small" id="btn-apply-techniques">Apply Selected</button>
+        </div>
+        <div class="techniques-grid" id="techniques-grid"></div>
+      </div>
+
+      <!-- Variants -->
+      <div class="engineer-section">
+        <div class="section-header">
+          <span class="section-label">Prompt Variants</span>
+          <button class="btn-outline btn-small" id="btn-generate-variants">Generate</button>
+        </div>
+        <div class="variants-container" id="variants-container">
+          <div class="empty-state small">
+            <p>Click Generate to create 3 variations of your prompt</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Version History -->
+      <div class="engineer-section">
+        <div class="section-header">
+          <span class="section-label">Version History</span>
+          <div class="version-actions">
+            <button class="btn-outline btn-small" id="btn-save-version">Save Version</button>
+            <button class="btn-outline btn-small" id="btn-clear-versions">Clear</button>
+          </div>
+        </div>
+        <div class="versions-list" id="versions-list">
+          <div class="empty-state small">
+            <p>No versions saved yet</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="panel-history">
+      <div class="history-search-wrapper">
+        <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" class="history-search" id="history-search" placeholder="Search prompts...">
+      </div>
+      <div class="history-list" id="history-list">
+        <div class="empty-state" id="history-empty">
+          <p>No prompts yet.</p>
+          <p class="empty-sub">Enhance your first prompt to build your history.</p>
+        </div>
+      </div>
+      <button class="btn-danger" id="btn-clear-history">Clear All History</button>
+    </div>
+  </div>
+
+  <div id="tip-carousel" class="tip-carousel">
+    <button class="tip-arrow" id="tip-prev">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <span class="tip-text" id="tip-text"></span>
+    <button class="tip-arrow" id="tip-next">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+  </div>
+
+  <div id="settings-modal" class="settings-modal hidden">
+    <div class="modal-backdrop" id="settings-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="modal-title">Settings</span>
+        <button class="modal-close" id="settings-close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="settings-section">
+          <div class="section-title">API Key (for local testing)</div>
+          <div class="setting-row">
+            <label class="setting-label" for="setting-api-key">OpenRouter Key</label>
+            <input type="password" class="setting-input" id="setting-api-key" placeholder="sk-or-..." autocomplete="off">
+          </div>
+        </div>
+        <div class="settings-section">
+          <div class="section-title">Behavior</div>
+          <div class="setting-row">
+            <label class="setting-label" for="setting-auto-stack">Auto-detect stack</label>
+            <label class="toggle">
+              <input type="checkbox" id="setting-auto-stack" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="setting-row">
+            <label class="setting-label" for="setting-token-eff">Show token efficiency</label>
+            <label class="toggle">
+              <input type="checkbox" id="setting-token-eff" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="setting-row">
+            <label class="setting-label" for="setting-before-after">Show before/after</label>
+            <label class="toggle">
+              <input type="checkbox" id="setting-before-after" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="setting-row">
+            <label class="setting-label" for="setting-theme">Light theme</label>
+            <label class="toggle">
+              <input type="checkbox" id="setting-theme">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+        <div class="settings-section">
+          <div class="section-title">Data</div>
+          <button class="btn-outline" id="btn-export">Export All Data</button>
+          <button class="btn-outline" id="btn-import">Import Data</button>
+          <button class="btn-outline btn-danger-outline" id="btn-clear-data">Clear All Data</button>
+        </div>
+        <button class="btn-outline btn-small" id="btn-reset-settings">Reset to Defaults</button>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" id="import-file-input" accept=".json" style="display:none">
+</body>
+</html>

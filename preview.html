@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vibe Check — Preview</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* Preview wrapper styles */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body.preview-body {
+      background: #010103;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Inter', system-ui, sans-serif;
+      overflow: auto;
+      padding: 40px 20px;
+    }
+    .preview-bg {
+      position: fixed;
+      inset: 0;
+      background:
+        url('popup/crystal-bg.jpg') center/cover no-repeat;
+      opacity: 0.25;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .preview-bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 70% at 50% 50%, transparent 20%, #010103 80%);
+    }
+    .preview-container {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      width: 100%;
+      max-width: 520px;
+    }
+    .preview-header {
+      text-align: center;
+    }
+    .preview-header h1 {
+      font-size: 28px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #C4A265, #8B7355, #C4A265);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.5px;
+    }
+    .preview-header p {
+      color: #555;
+      font-size: 13px;
+      margin-top: 4px;
+    }
+    .extension-frame {
+      width: 100%;
+      max-width: 460px;
+      background: rgba(1,1,3,0.7);
+      backdrop-filter: blur(24px) saturate(1.4);
+      -webkit-backdrop-filter: blur(24px) saturate(1.4);
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.04),
+        0 20px 60px rgba(0,0,0,0.6),
+        0 0 80px rgba(196,162,101,0.04);
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body class="preview-body">
+  <div class="preview-bg"></div>
+  <div class="preview-container">
+    <div class="preview-header">
+      <h1>VIBE CHECK</h1>
+      <p>AI Prompt Enhancer — Local Preview</p>
+    </div>
+    <div class="extension-frame">
+      <!-- The popup content gets injected here -->
+      <div id="popup-mount"></div>
+    </div>
+  </div>
+
+  <!-- Load polyfill FIRST -->
+  <script src="lib/chrome-polyfill.js"></script>
+  <!-- Load all library modules -->
+  <script src="lib/settings.js"></script>
+  <script src="lib/stack-detector.js"></script>
+  <script src="lib/templates.js"></script>
+  <script src="lib/scorer.js"></script>
+  <script src="lib/enhancer.js"></script>
+  <script src="lib/prompt-engineer.js"></script>
+  <script src="lib/history.js"></script>
+  <!-- Load popup CSS and HTML -->
+  <link rel="stylesheet" href="popup/popup.css">
+  <script>
+    // Fetch and inject popup.html body content, then load popup.js
+    fetch('popup/popup.html')
+      .then(function(r) { return r.text(); })
+      .then(function(html) {
+        var match = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+        if (match) {
+          document.getElementById('popup-mount').innerHTML = match[1];
+        }
+        // Load popup.js — it registers DOMContentLoaded which we fire after
+        var script = document.createElement('script');
+        script.src = 'popup/popup.js';
+        script.onload = function() {
+          document.dispatchEvent(new Event('DOMContentLoaded'));
+        };
+        document.body.appendChild(script);
+      });
+  </script>
+</body>
+</html>
